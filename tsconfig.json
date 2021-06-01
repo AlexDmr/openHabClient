@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "noUnusedParameters": false,
+    "noUnusedLocals": true,
+    "target": "es2019",
+    "module": "es2020",
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "sourceMap": true,
+    "declaration": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "moduleResolution": "node",
+    "removeComments": true,
+    "noImplicitAny": false,
+    "suppressImplicitAnyIndexErrors": true,
+    "watch": true,
+    "outDir": "build_ES2020_ES2020/"
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
