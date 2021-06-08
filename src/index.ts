@@ -1,10 +1,7 @@
-//import { EventSourceDomus } from './EventSourceDomus';
 import {openHabClient}  from './openHabClient';
-const url:string = 'https://localhost:8433/rest/events'
 
+const url:string = 'https://domus-anubis.u-ga.fr:8443/rest'
 // const OHC = new 
-// const eventSrc = new EventSourceDomus(url);
-// console.log( eventSrc);
-
 const es = new openHabClient(url,'');
+
 console.log(es.obsEvents);

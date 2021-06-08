@@ -15,7 +15,7 @@ if ((typeof process !== 'undefined') && (process.release.name === 'node')) {
     ENV = 'NODE';
     // const eventSource = require('eventsource').default;
     const { default: eventSource } = await import('eventsource') as any; //  as {default: EventSource};
-    EventSourceDomus = url => new eventSource(url, { withCredentials: true } );
+    EventSourceDomus = url => new eventSource(url, { withCredentials: false } );
 
     const { default: fetchDomusFCT } = await import('node-fetch') as any;
     fetchDomus = fetchDomusFCT;
@@ -40,11 +40,11 @@ export class openHabClient implements openHabClientInterface {
 
     constructor(private url: string, private token: string) {
         const subjEvents = new Subject<MessageEvent>();
-        this.es = EventSourceDomus(url); // new EventSource(url, { withCredentials: true });
+        this.es = EventSourceDomus(`${url}/events`); //, { withCredentials: true }); // new EventSource(url, { withCredentials: true });
         this.es.onmessage = (evt: MessageEvent<openHabEvent<object>>) => {
             // Republication de l'événement dans l'observable
             subjEvents.next(evt);
-
+            console.log(evt);
             // Traitement de l'événement
             switch (evt.data.type) {
                 case 'ItemStateEvent':
@@ -65,11 +65,13 @@ export class openHabClient implements openHabClientInterface {
     private async init() {
         const R = await fetchDomus(`${this.url}/items`, {
             headers: {
-                Authorisation: this.token
+                Authorisation: this.token,
+                'Content-Type': 'application/json'
             }
         });
         const items: Item[] = await R.json();
         this.items.next(items);
+        // console.log(items);
     }
 
     getItems(): Item[] {

@@ -6,7 +6,7 @@ if ((typeof process !== 'undefined') && (process.release.name === 'node')) {
     console.log("On est dans NodeJS... ");
     ENV = 'NODE';
     const { default: eventSource } = await import('eventsource');
-    EventSourceDomus = url => new eventSource(url, { withCredentials: true });
+    EventSourceDomus = url => new eventSource(url, { withCredentials: false });
     const { default: fetchDomusFCT } = await import('node-fetch');
     fetchDomus = fetchDomusFCT;
 }
@@ -25,9 +25,10 @@ export class openHabClient {
         this.obsItems = this.items.asObservable();
         this.obsRules = this.rules.asObservable();
         const subjEvents = new Subject();
-        this.es = EventSourceDomus(url);
+        this.es = EventSourceDomus(`${url}/events`);
         this.es.onmessage = (evt) => {
             subjEvents.next(evt);
+            console.log(evt);
             switch (evt.data.type) {
                 case 'ItemStateEvent':
                     console.log('on reçoit un stateEvent', evt);
@@ -43,7 +44,8 @@ export class openHabClient {
     async init() {
         const R = await fetchDomus(`${this.url}/items`, {
             headers: {
-                Authorisation: this.token
+                Authorisation: this.token,
+                'Content-Type': 'application/json'
             }
         });
         const items = await R.json();
