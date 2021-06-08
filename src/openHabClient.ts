@@ -1,8 +1,10 @@
-import { BehaviorSubject, fromEvent, Observable, Subject } from "rxjs";
+import { BehaviorSubject, /*fromEvent,*/ Observable, Subject } from "rxjs";
 import { openHabClientInterface } from "./openHabClientInterface";
 import { Item } from "./Item";
 import { Rule } from "./Rule";
 import { openHabEvent } from "./openHabEvent";
+import * as EventSource from "eventsource";
+
 
 export class openHabClient implements openHabClientInterface {
     private items = new BehaviorSubject<Item[]>([]);
@@ -15,7 +17,7 @@ export class openHabClient implements openHabClientInterface {
 
     constructor(private url: string, private token: string) {
         const subjEvents = new Subject<MessageEvent>();
-        this.es = new EventSource(url);
+        this.es = new EventSource(url, { withCredentials: true });
         this.es.onmessage = (evt: MessageEvent<openHabEvent<object>>) => {
             // Republication de l'événement dans l'observable
             subjEvents.next(evt);
@@ -32,6 +34,9 @@ export class openHabClient implements openHabClientInterface {
 
         // Initialisation des listes d'items et de rules.
         this.init();
+    }
+    getEvents(): Observable<MessageEvent<openHabEvent<object>>> {
+        throw new Error("Method not implemented.");
     }
 
     private async init() {

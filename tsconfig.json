@@ -17,7 +17,8 @@
     "noImplicitAny": false,
     "suppressImplicitAnyIndexErrors": true,
     "watch": true,
-    "outDir": "build_ES2020_ES2020/"
+    "outDir": "./dist",
+    "rootDir":"./src"
   },
   "include": [
     "src/**/*.ts"

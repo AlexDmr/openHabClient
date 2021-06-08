@@ -4,14 +4,18 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "nodemon --es-module-specifier-resolution=node --trace-warnings dist/index.js",
+    "compile": "tsc --watch"
   },
+  "type": "module",
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/eventsource": "^1.1.5",
     "typescript": "^4.3.2"
   },
   "dependencies": {
+    "eventsource": "^1.1.0",
     "rxjs": "^7.1.0"
   }
 }
