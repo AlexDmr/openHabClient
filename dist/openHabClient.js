@@ -14,6 +14,7 @@ else {
     console.log("On es dans le navigateur");
     ENV = 'BROWSER';
     EventSourceDomus = url => new EventSource(url, { withCredentials: true });
+    fetchDomus = fetch;
 }
 console.log("Environment", ENV);
 export class openHabClient {
