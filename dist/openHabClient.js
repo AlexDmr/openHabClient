@@ -1,5 +1,21 @@
 import { BehaviorSubject, Subject } from "rxjs";
-import * as EventSource from "eventsource";
+let ENV;
+let EventSourceDomus;
+let fetchDomus;
+if ((typeof process !== 'undefined') && (process.release.name === 'node')) {
+    console.log("On est dans NodeJS... ");
+    ENV = 'NODE';
+    const { default: eventSource } = await import('eventsource');
+    EventSourceDomus = url => new eventSource(url, { withCredentials: true });
+    const { default: fetchDomusFCT } = await import('node-fetch');
+    fetchDomus = fetchDomusFCT;
+}
+else {
+    console.log("On es dans le navigateur");
+    ENV = 'BROWSER';
+    EventSourceDomus = url => new EventSource(url, { withCredentials: true });
+}
+console.log("Environment", ENV);
 export class openHabClient {
     constructor(url, token) {
         this.url = url;
@@ -9,7 +25,7 @@ export class openHabClient {
         this.obsItems = this.items.asObservable();
         this.obsRules = this.rules.asObservable();
         const subjEvents = new Subject();
-        this.es = new EventSource(url, { withCredentials: true });
+        this.es = EventSourceDomus(url);
         this.es.onmessage = (evt) => {
             subjEvents.next(evt);
             switch (evt.data.type) {
@@ -25,7 +41,7 @@ export class openHabClient {
         throw new Error("Method not implemented.");
     }
     async init() {
-        const R = await fetch(`${this.url}/items`, {
+        const R = await fetchDomus(`${this.url}/items`, {
             headers: {
                 Authorisation: this.token
             }

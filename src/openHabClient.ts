@@ -3,7 +3,30 @@ import { openHabClientInterface } from "./openHabClientInterface";
 import { Item } from "./Item";
 import { Rule } from "./Rule";
 import { openHabEvent } from "./openHabEvent";
-import * as EventSource from "eventsource";
+
+
+// import * as EventSource from "eventsource";
+let ENV: 'NODE' | 'BROWSER';
+let EventSourceDomus: (url: string) => EventSource;
+let fetchDomus: (input: RequestInfo, init?: RequestInit) => Promise<Response>;
+
+if ((typeof process !== 'undefined') && (process.release.name === 'node')) {
+    console.log("On est dans NodeJS... ");
+    ENV = 'NODE';
+    // const eventSource = require('eventsource').default;
+    const { default: eventSource } = await import('eventsource') as any; //  as {default: EventSource};
+    EventSourceDomus = url => new eventSource(url, { withCredentials: true } );
+
+    const { default: fetchDomusFCT } = await import('node-fetch') as any;
+    fetchDomus = fetchDomusFCT;
+
+} else {
+    console.log("On es dans le navigateur");
+    ENV = 'BROWSER';
+    EventSourceDomus = url => new EventSource(url, { withCredentials: true } );
+}
+
+console.log("Environment", ENV);
 
 
 export class openHabClient implements openHabClientInterface {
@@ -17,7 +40,7 @@ export class openHabClient implements openHabClientInterface {
 
     constructor(private url: string, private token: string) {
         const subjEvents = new Subject<MessageEvent>();
-        this.es = new EventSource(url, { withCredentials: true });
+        this.es = EventSourceDomus(url); // new EventSource(url, { withCredentials: true });
         this.es.onmessage = (evt: MessageEvent<openHabEvent<object>>) => {
             // Republication de l'événement dans l'observable
             subjEvents.next(evt);
@@ -40,7 +63,7 @@ export class openHabClient implements openHabClientInterface {
     }
 
     private async init() {
-        const R = await fetch(`${this.url}/items`, {
+        const R = await fetchDomus(`${this.url}/items`, {
             headers: {
                 Authorisation: this.token
             }

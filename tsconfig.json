@@ -2,8 +2,8 @@
   "compilerOptions": {
     "noUnusedParameters": false,
     "noUnusedLocals": true,
-    "target": "es2019",
-    "module": "es2020",
+    "target": "es2020",
+    "module": "esnext",
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "noImplicitReturns": true,
