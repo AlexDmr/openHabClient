@@ -34,7 +34,8 @@ export class openHabClient implements openHabClientInterface
         const subjEvents = new Subject<MessageEvent>();
         this.es = new EventSource(this.url + "/events/");
 
-        this.es.onmessage = (evt: MessageEvent<openHabEvent<object>>) => 
+        //this.es.onmessage = (evt: MessageEvent<openHabEvent<object>>) => 
+        this.es.onmessage = (evt: MessageEvent<openHabEvent>) => 
         {
             // Republication de l'événement dans l'observable
             subjEvents.next(evt);
@@ -55,7 +56,9 @@ export class openHabClient implements openHabClientInterface
                     break;
 
                 default:
-                    console.log("default : ", evt);
+                    console.log("default : ", evt.data);
+                    const myData : openHabEvent = JSON.parse(String(evt.data));
+                    console.log("   after parsing : ", myData);
                     break;
             }
         }
@@ -72,6 +75,7 @@ export class openHabClient implements openHabClientInterface
 
         // Recuperation des rules d'openHAB (avec le token d'authentification)
         const ResponseRules = await fetch(`${this.url}/rules`, { method: 'GET', headers: { 'Content-Type': 'application/json', Authorization: this.token } });
+        //const ResponseRules = await fetch(`${this.url}/rules`, { method: 'GET', credentials:'same-origin', headers: { 'Content-Type': 'application/json' } });
         const MyRules: Rule[] = await ResponseRules.json();
         this.rules.next(MyRules);
     }
@@ -99,10 +103,10 @@ export class openHabClient implements openHabClientInterface
         {
             method: 'POST',
             headers : {
-                'Content-Type': 'text/plain; charset=utf-8',
+                'Content-Type': 'text/plain',
                 Authorization: this.token
             },
-            body: JSON.stringify(state)
+            body: state
         } 
         
         );
@@ -115,10 +119,10 @@ export class openHabClient implements openHabClientInterface
         {
             method: 'POST',
             headers : {
-                'Content-Type': 'text/plain; charset=utf-8',
+                'Content-Type': 'text/plain',
                 Authorization: this.token
             },
-            body: JSON.stringify(activation)
+            body: activation
         } 
         
         );
