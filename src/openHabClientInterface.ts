@@ -4,11 +4,11 @@ import { openHabEvent } from "./openHabEvent";
 import { Rule } from "./Rule";
 
 export interface openHabClientInterface {
-    getItems(): Item[];
-    getRules(): Rule[];
+    getItems(): Observable<Item[]>;
+    getRules(): Observable<Rule[]>;
 
     setItem(id: string, state: string): Promise<void>;
-    setRule(id: string, activation: boolean): Promise<void>;
+    setRule(id: string, activation: string): Promise<void>;
 
-    getEvents(): Observable<MessageEvent<openHabEvent<object>>>
+    //getEvents(): Observable<MessageEvent<openHabEvent<object>>>
 }

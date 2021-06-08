@@ -1,62 +1,127 @@
 import { BehaviorSubject, fromEvent, Observable, Subject } from "rxjs";
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+
 import { openHabClientInterface } from "./openHabClientInterface";
 import { Item } from "./Item";
 import { Rule } from "./Rule";
 import { openHabEvent } from "./openHabEvent";
 
-export class openHabClient implements openHabClientInterface {
+
+
+export class openHabClient implements openHabClientInterface
+{
     private items = new BehaviorSubject<Item[]>([]);
     private rules = new BehaviorSubject<Rule[]>([]);
-    private es: EventSource;
-
+    
     public readonly obsItems = this.items.asObservable();
     public readonly obsRules = this.rules.asObservable();
-    public readonly obsEvents: Observable<MessageEvent>;
 
-    constructor(private url: string, private token: string) {
+    private es: EventSource | null = null;
+    public obsEvents: Observable<MessageEvent> | null = null;
+
+
+    constructor(private http: HttpClient, private url: string, private token: string)
+    {
+        // Initialisation de l'EventSource
+        this.initEvents();
+        
+        // Initialisation des listes d'items et de rules.
+        this.initItemsAndRules();
+    }
+
+    private async initEvents()
+    {
         const subjEvents = new Subject<MessageEvent>();
-        this.es = new EventSource(url);
-        this.es.onmessage = (evt: MessageEvent<openHabEvent<object>>) => {
+        this.es = new EventSource(this.url + "/events/");
+
+        this.es.onmessage = (evt: MessageEvent<openHabEvent<object>>) => 
+        {
             // Republication de l'événement dans l'observable
             subjEvents.next(evt);
 
             // Traitement de l'événement
-            switch (evt.data.type) {
+            switch (evt.data.type)
+            {
+                case 'ItemStateChangedEvent':
+                    console.log("L'etat de l'item change : ", evt);
+                    break;
+
                 case 'ItemStateEvent':
-                    console.log('on reçoit un stateEvent', evt);
+                    console.log("L'etat de l'item est modifie (pas forcement de changement) : ", evt);
+                    break;
+
+                case 'ItemCommandEvent':
+                    console.log("Une commande est envoyée a un item : ", evt);
+                    break;
+
+                default:
+                    console.log("default : ", evt);
                     break;
             }
         }
-
         this.obsEvents = subjEvents.asObservable();
-
-        // Initialisation des listes d'items et de rules.
-        this.init();
     }
 
-    private async init() {
-        const R = await fetch(`${this.url}/items`, {
-            headers: {
-                Authorisation: this.token
-            }
-        });
-        const items: Item[] = await R.json();
-        this.items.next(items);
+
+    private async initItemsAndRules()
+    {
+        // Recuperation des items openHAB (pas besoin d'authentification)
+        const ResponseItems = await fetch(`${this.url}/items`);
+        const MyItems: Item[] = await ResponseItems.json();
+        this.items.next(MyItems);
+
+        // Recuperation des rules d'openHAB (avec le token d'authentification)
+        const ResponseRules = await fetch(`${this.url}/rules`, { method: 'GET', headers: { 'Content-Type': 'application/json', Authorization: this.token } });
+        const MyRules: Rule[] = await ResponseRules.json();
+        this.rules.next(MyRules);
     }
 
-    getItems(): Item[] {
-        return this.items.value;
-    }
-    getRules(): Rule[] {
-        return this.rules.value;
+
+    // Renvoie d'un Observable sur la liste d'items
+    getItems(): Observable<Item[]> { 
+        return this.obsItems; 
     }
 
-    async setItem(id: string, state: string): Promise<void> {
-
+    // Renvoie d'un Observable sur la liste de rules
+    getRules(): Observable<Rule[]> { 
+        return this.obsRules; 
     }
-    
-    async setRule(id: string, activation: boolean): Promise<void> {
+
+    // Renvoie d'un Observable sur les events
+    /*getEvents(): Observable<MessageEvent<openHabEvent<object>>> {
+        return this.obsEvents;
+    }*/
+
+    // Affectation a l'item {id} de la valeur {state}
+    async setItem(id: string, state: string): Promise<void> 
+    {
+        const ResponseItemStatePost = await fetch(`${this.url}/items/${id}`,
+        {
+            method: 'POST',
+            headers : {
+                'Content-Type': 'text/plain; charset=utf-8',
+                Authorization: this.token
+            },
+            body: JSON.stringify(state)
+        } 
         
+        );
+    }
+
+    // Activation/desactivation de la rule {id}
+    async setRule(id: string, activation: string): Promise<void> 
+    { 
+        const ResponseItemStatePost = await fetch(`${this.url}/rules/${id}`,
+        {
+            method: 'POST',
+            headers : {
+                'Content-Type': 'text/plain; charset=utf-8',
+                Authorization: this.token
+            },
+            body: JSON.stringify(activation)
+        } 
+        
+        );
     }
 
 }
